@@ -1,0 +1,10 @@
+moviefilestr,movie.ufmf
+roidetectparamsfilestr,roidetect_params.txt
+trackingparamsfilestr,tracking_params.txt
+wingtrackingparamsfilestr,wingtracking_params.txt
+bgmatfilestr,bgdata.mat
+roidatamatfilestr,roidata.mat
+roiimagefilestr,rois.png
+trackingdatamatfilestr,trackingdata.mat
+trxfilestr,registered_trx.mat
+metadatafilestr,Metadata.xml

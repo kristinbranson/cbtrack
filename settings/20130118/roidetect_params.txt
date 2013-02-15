@@ -1,0 +1,13 @@
+cannythresh,.03,.06
+cannysigma,3
+maxdcenter,10
+maxdradius,10
+nbinscenter,21
+nbinsradius,21
+meanroiradius,121.4683
+roimus,262.5975,253.3691,514.7065,256.8469,766.6785,261.0128,133.7526,507.6416,385.1247,508.2398,638.3260,511.2702,889.5829,514.7079,255.6345,758.9520,507.6222,762.8746,760.0276,766.5262
+nframessample,100
+roidiameter_mm,30.3
+roirows,top,1,2,3,middle,4,5,6,7,bottom,8,9,10
+baserotateby,180
+baserotatebyperrigbowl,1A,180,1B,180,1C,180,1D,180,2A,180,2B,180,2C,180,2D,180
