@@ -1,6 +1,6 @@
 function trackdata = TrackTwoFlies(moviefile,bgmed,roidata,params,varargin)
 
-version = '0.1';
+version = '0.1.1';
 timestamp = datestr(now,TimestampFormat);
 trackdata = struct;
 trackdata.tracktwoflies_version = version;
@@ -219,7 +219,7 @@ for i = 1:nrois,
     %trackdata.trx(j).roibb = roibbs(i,:);
     trackdata.trx(j).moviefile = moviefile;
     trackdata.trx(j).dt = diff(timestamps(trackdata.trx(j).firstframe:trackdata.trx(j).endframe));
-    trackdata.trx(j).timestamp = timestamps(trackdata.trx(j).firstframe:trackdata.trx(j).endframe);    
+    trackdata.trx(j).timestamps = timestamps(trackdata.trx(j).firstframe:trackdata.trx(j).endframe);    
     fly2roiid(j) = jj; %#ok<AGROW>
     j = j + 1;
   end
@@ -322,7 +322,7 @@ if strcmp(params.assignidsby,'wingsize'),
       <= roidata.radii(roii)^2 );
   end
   
-  [wingtrx,wingperframedata,wingtrackinfo] = TrackWingsHelper(trackdata.trx,moviefile,double(bgmed),isarena,params.wingtracking_params,...
+  [wingtrx,wingperframedata,wingtrackinfo,wingperframeunits] = TrackWingsHelper(trackdata.trx,moviefile,double(bgmed),isarena,params.wingtracking_params,...
     'firstframe',params.firstframetrack,...
     'debug',params.DEBUG);
   didtrackwings = true;
@@ -330,6 +330,7 @@ if strcmp(params.assignidsby,'wingsize'),
   trackdata.trackwings_version = wingtrackinfo.trackwings_version;
   trackdata.trx = wingtrx;
   trackdata.perframedata = wingperframedata;
+  trackdata.perframeunits = wingperframeunits;
 
 end
 
@@ -389,7 +390,7 @@ for roii = 1:nrois,
       area = a.*b.*pi*4;
       iddata = cat(3,area,a,b);
     case 'wingsize',
-      iddata = cat(1,trackdata.perframedata.wing_areal{flies});
+      iddata = cat(1,wingarea{flies});
     otherwise,
       error('Unknown assignidsby value');
   end
@@ -407,7 +408,7 @@ for roii = 1:nrois,
       if isfield(trackdata,'perframedata'),
         for k = 1:numel(perframefns),
           trackdata.perframedata.(perframefns{k}){flies(i)}(idx) = ...
-            oldperframedata.(perframefns{k}){flies(i)}(idx);
+            oldperframedata.(perframefns{k}){flies(j)}(idx);
         end
       end
     end
@@ -542,13 +543,13 @@ if params.dotrackwings && ~isempty(roistrack),
   end
   
   if didtrackwings,
-    [wingtrx,wingperframedata,wingtrackinfo] = TrackWingsHelper(trackdata.trx,moviefile,double(bgmed),isarena,params.wingtracking_params,...
+    [wingtrx,wingperframedata,wingtrackinfo,wingperframeunits] = TrackWingsHelper(trackdata.trx,moviefile,double(bgmed),isarena,params.wingtracking_params,...
       'firstframe',params.firstframetrack,...
       'debug',params.DEBUG,...
       'framestrack',unique(cat(2,framestrack{:})),...
       'perframedata',trackdata.perframedata);
   else  
-    [wingtrx,wingperframedata,wingtrackinfo] = TrackWingsHelper(trackdata.trx,moviefile,double(bgmed),isarena,params.wingtracking_params,...
+    [wingtrx,wingperframedata,wingtrackinfo,wingperframeunits] = TrackWingsHelper(trackdata.trx,moviefile,double(bgmed),isarena,params.wingtracking_params,...
       'firstframe',params.firstframetrack,...
       'debug',params.DEBUG);
   end
@@ -556,6 +557,7 @@ if params.dotrackwings && ~isempty(roistrack),
   trackdata.trackwings_version = wingtrackinfo.trackwings_version;
   trackdata.trx = wingtrx;
   trackdata.perframedata = wingperframedata;
+  trackdata.perframeunits = wingperframeunits;
 
 end
 
@@ -566,6 +568,7 @@ end
 if isfield(roidata,'pxpermm'),
   
   dorotate = isfield(roidata,'rotateby');
+  dotranslate = all(isfield(roidata,{'centerx','centery'}));
   if dorotate,
     costheta = cos(roidata.rotateby);
     sintheta = sin(roidata.rotateby);
@@ -575,8 +578,16 @@ if isfield(roidata,'pxpermm'),
   for fly = 1:numel(trackdata.trx),
     
     roii = trackdata.trx(fly).roi;
-    x = (trackdata.trx(fly).x - roidata.centerx(roii)) / roidata.pxpermm;
-    y = (trackdata.trx(fly).y - roidata.centery(roii)) / roidata.pxpermm;
+    x = trackdata.trx(fly).x;
+    if dotranslate,
+      x = x - roidata.centerx(roii);
+    end
+    x = x / roidata.pxpermm;
+    y = trackdata.trx(fly).y;
+    if dotranslate,
+      y = y - roidata.centery(roii);
+    end
+    y = y / roidata.pxpermm;
     a = trackdata.trx(fly).a / roidata.pxpermm;
     b = trackdata.trx(fly).b / roidata.pxpermm;
     theta = trackdata.trx(fly).theta;
@@ -598,7 +609,6 @@ if isfield(roidata,'pxpermm'),
         
   end
   
-  
 end
 
 dt = diff(timestamps);
@@ -617,12 +627,25 @@ end
 if isfield(params,'usemediandt') && params.usemediandt,
   
   for fly = 1:nflies,
-    trackdata.trx(fly).dt = repmat(mediandt,[1,trackdata.trx(fly).nframes]);
+    trackdata.trx(fly).dt = repmat(mediandt,[1,trackdata.trx(fly).nframes-1]);
   end
   
 end
 
 
+%% add arena parameters
+
+if all(isfield(roidata,{'centerx','centery','radii'})),
+
+  for i = 1:nflies,
+    roii = trackdata.trx(i).roi;
+    trackdata.trx(i).arena.arena_radius_mm = roidata.radii(roii) / roidata.pxpermm;
+    trackdata.trx(i).arena.arena_center_mm_x = 0;
+    trackdata.trx(i).arena.arena_center_mm_y = 0;
+  end
+  
+end
+    
 %% clean up
 
 fprintf('Clean up...\n');

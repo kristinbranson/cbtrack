@@ -8,3 +8,7 @@ roiimagefilestr,rois.png
 trackingdatamatfilestr,trackingdata.mat
 trxfilestr,registered_trx.mat
 metadatafilestr,Metadata.xml
+perframedir,perframe
+perframeparamsfilestr,perframe_params.txt
+perframefnsfilestr,perframefns.txt
+perframefeature_logfilestr,log_cbcomputeperframefeatures.txt

@@ -1,6 +1,6 @@
 function trackdata = CourtshipBowlTrack(expdir,varargin)
 
-version = '0.1';
+version = '0.1.1';
 timestamp = datestr(now,TimestampFormat);
 
 %% parse inputs
@@ -62,8 +62,55 @@ trackdata.courtshipbowltrack_timestamp = timestamp;
 trackdata.params = params;
 trx = trackdata.trx; %#ok<NASGU>
 timestamps = trackdata.timestamps; %#ok<NASGU>
-trackdata = rmfield(trackdata,{'trx','timestamps'});
+
+% trx
+outfilename = fullfile(expdir,dataloc_params.trxfilestr);
+if exist(outfilename,'file'),
+  delete(outfilename);
+end
+save(outfilename,'trx','timestamps');
+
+% perframe data
+perframedir = fullfile(expdir,dataloc_params.perframedir);
+if ~exist(perframedir,'dir'),
+  mkdir(perframedir);
+end
+perframefns = fieldnames(trackdata.perframedata);
+for i = 1:numel(perframefns),
+  perframefn = perframefns{i};
+  filename = fullfile(perframedir,[perframefn,'.mat']);
+  if exist(filename,'file'),
+    delete(filename);
+  end
+  data = trackdata.perframedata.(perframefn); %#ok<NASGU>
+  units = trackdata.perframeunits.(perframefn); %#ok<NASGU>
+  save(filename,'data','units');
+end
+% also save sex
+perframefns = {'sex','x_mm','y_mm','a_mm','b_mm','theta_mm','x','y','a','b','theta','timestamps','dt'};
+for i = 1:numel(perframefns),
+  perframefn = perframefns{i};
+  filename = fullfile(perframedir,[perframefn,'.mat']);
+  if strcmp(perframefn,'sex') && ~isfield(trackdata.trx,'sex'),
+    data = cell(1,numel(trackdata.trx));
+    for fly = 1:numel(trackdata.trx),
+      data{fly} = repmat('?',[1,trackdata.trx(fly).nframes]);
+    end
+    units = parseunits('unit'); %#ok<NASGU>
+  elseif ~isfield(trackdata.trx,perframefn) || ~isfield(trackdata.perframeunits,perframefn),
+    continue;
+  else
+    data = {trackdata.trx.(perframefn)}; %#ok<NASGU>
+    units = trackdata.perframeunits.(perframefn);     %#ok<NASGU>
+  end
+  save(filename,'data','units');
+  
+end
+
+
+% tracking data without the trx
+trackdata = rmfield(trackdata,{'trx','timestamps','perframedata','perframeunits'});
 outfilename = fullfile(expdir,dataloc_params.trackingdatamatfilestr);
 save(outfilename,'-struct','trackdata');
-outfilename = fullfile(expdir,dataloc_params.trxfilestr);
-save(outfilename,'trx','timestamps');
+
+
