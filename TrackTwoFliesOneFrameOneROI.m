@@ -46,6 +46,20 @@ else
   
   % fit ellipses
 
+  if cc.NumObjects > 2 && ncc_bigenough < 2 && params.bgthresh_low < params.bgthresh,
+    
+    % try to connect split apart connected components
+    isforebb_low = dbkgdbb >= params.bgthresh_low;
+    cc_low = bwconncomp(isforebb_low);
+    if cc.NumObjects == 2 || cc.NumObjects == 1,
+      cc = cc_low;
+      cc.Area = cellfun(@numel,cc.PixelIdxList);
+      isbigenough = cc.Area >= params.minccarea;
+      ncc_bigenough = nnz(isbigenough);
+    end
+    
+  end
+  
   % separate connected components
   if ncc_bigenough == 2,
     ccidx = find(isbigenough);

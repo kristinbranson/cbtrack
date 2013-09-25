@@ -4,7 +4,9 @@ trxcurr = trxprev;
 % loop over rois  
 for roii = 1:roidata.nrois,
   
-  if roidata.nflies_per_roi(roii) == 0,
+  if isnan(roidata.nflies_per_roi(roii)) || ...
+      roidata.nflies_per_roi(roii) == 0 || ...
+      roidata.nflies_per_roi(roii) > 2,
     continue;
   end
   

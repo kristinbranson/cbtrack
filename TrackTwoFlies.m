@@ -7,7 +7,7 @@ trackdata.tracktwoflies_version = version;
 trackdata.tracktwoflies_timestamp = timestamp;
 
 tmpfilename = sprintf('TmpResultsTrackTwoFlies_%s.mat',datestr(now,TimestampFormat));
-[restart,tmpfilename] = myparse(varargin,'restart','','tmpfilename',tmpfilename);
+[restart,tmpfilename,logfid] = myparse(varargin,'restart','','tmpfilename',tmpfilename,'logfid',1);
 
 dorestart = false;
 if ~isempty(restart),
@@ -16,7 +16,7 @@ if ~isempty(restart),
   restartstage = stage; %#ok<NODEF>
   dorestart = true;
 end
-fprintf('TrackTwoFlies temporary results saved to file %s\n',tmpfilename);
+fprintf(logfid,'TrackTwoFlies temporary results saved to file %s\n',tmpfilename);
 
 SetBackgroundTypes;
 flycolors = {'r','b'};
@@ -24,7 +24,7 @@ stages = {'maintracking','chooseorientations','trackwings1','assignids','chooseo
 
 %% open movie
 
-fprintf('Opening movie...\n');
+fprintf(logfid,'Opening movie...\n');
 [readframe,nframes,fid,headerinfo] = get_readframe_fcn(moviefile);
 
 %% initialize
@@ -33,7 +33,7 @@ nrois = roidata.nrois;
 nframes_track = min(params.lastframetrack,nframes)-params.firstframetrack+1;
 
 if ~dorestart,
-  fprintf('Allocating...\n');
+  fprintf(logfid,'Allocating...\n');
   trxx = nan(2,nrois,nframes_track);
   trxy = nan(2,nrois,nframes_track);
   trxa = nan(2,nrois,nframes_track);
@@ -81,13 +81,13 @@ else
   startframe = params.firstframetrack;
 end
 
-fprintf('Main tracking...\n');
+fprintf(logfid,'Main tracking...\n');
 for t = startframe:min(params.lastframetrack,nframes),
   
   iframe = t - params.firstframetrack + 1;
   
   if mod(iframe,1000) == 0,
-    fprintf('Frame %d / %d\n',iframe,nframes_track);
+    fprintf(logfid,'Frame %d / %d\n',iframe,nframes_track);
   end
   
   % read in frame
@@ -172,7 +172,7 @@ save(tmpfilename,'trxx','trxy','trxa','trxb','trxtheta','trxarea','istouching','
 
 %% correct for bounding box of rois
 
-fprintf('Correcting for ROI bounding boxes...\n');
+fprintf(logfid,'Correcting for ROI bounding boxes...\n');
 for roii = 1:nrois,
   roibb = roidata.roibbs(roii,:);
   trxx(:,roii,:) = trxx(:,roii,:) + roibb(1) - 1;
@@ -181,7 +181,7 @@ end
 
 %% reformat
 
-fprintf('Reformatting...\n');
+fprintf(logfid,'Reformatting...\n');
 if isfield(headerinfo,'timestamps'),
   timestamps = headerinfo.timestamps;
 elseif isfield(headerinfo,'FrameRate'),
@@ -198,6 +198,9 @@ trackdata.trx = struct;
 j = 1;
 fly2roiid = [];
 for i = 1:nrois,
+  if isnan(roidata.nflies_per_roi(i)),
+    continue;
+  end
   for jj = 1:roidata.nflies_per_roi(i),
     trackdata.trx(j).x = reshape(trxx(jj,i,:),[1,nframes_track]);
     trackdata.trx(j).y = reshape(trxy(jj,i,:),[1,nframes_track]);
@@ -233,7 +236,7 @@ end
 
 %% resolve head/tail ambiguity
 
-fprintf('Choosing orientations 1...\n');
+fprintf(logfid,'Choosing orientations 1...\n');
 stage = 'chooseorientations'; 
 save(tmpfilename,'trackdata','params','moviefile','bgmed','roidata','nflies','fly2roiid','stage');
 
@@ -243,7 +246,30 @@ for i = 1:nflies,
   x = trackdata.trx(i).x;
   y = trackdata.trx(i).y;
   theta = trackdata.trx(i).theta;
-  trackdata.trx(i).theta = choose_orientations(x,y,theta,params.choose_orientations_velocity_angle_weight,params.choose_orientations_max_velocity_angle_weight);
+  roii = trackdata.trx(i).roi;
+  
+  dx = diff(x);
+  dy = diff(y);
+  v = sqrt(dx.^2 + dy.^2);
+  
+  % don't use velocity when touching, just keep angle consistent
+  % to do this, set max_velocity_angle_weight to 0 when flies are touching
+  istouching = trackdata.istouching(roii,:) > .5;
+  isjumping = v>=params.choose_orientations_min_jump_speed;
+  isjumping = [false,isjumping(1:end-1)|isjumping(2:end),false];
+  weight_phi = min(params.choose_orientations_max_velocity_angle_weight,params.choose_orientations_velocity_angle_weight.*[0,v]);
+  weight_phi(istouching|isjumping) = 0;
+  
+  % also don't rely on change in orientation as much when the fly is circular
+  ecc = trackdata.trx(i).b ./ trackdata.trx(i).a;
+  
+  parama = (params.choose_orientations_min_ecc_factor-1)/(1-params.choose_orientations_max_ecc_confident);
+  paramb = params.choose_orientations_min_ecc_factor - parama;
+  
+  ecc_factor = parama.*ecc + paramb;
+  weight_theta = max(params.choose_orientations_min_ecc_factor,min(1,ecc_factor)) .* params.choose_orientations_weight_theta;
+  
+  trackdata.trx(i).theta = choose_orientations2(x,y,theta,weight_theta,weight_phi);
 end
 
 end
@@ -307,7 +333,7 @@ if ~dorestart || find(strcmp(stage,stages)) >= find(strcmp(restartstage,stages))
 
 if strcmp(params.assignidsby,'wingsize'),
 
-  fprintf('Tracking wings 1...\n');
+  fprintf(logfid,'Tracking wings 1...\n');
   
   [nr,nc,~] = size(readframe(1));
   isarena = false(nr,nc);
@@ -338,7 +364,7 @@ end
 
 %% assign identities based on size of something
 
-fprintf('Assigning identities based on sizes...\n');
+fprintf(logfid,'Assigning identities based on sizes...\n');
 
 stage = 'assignids'; 
 save(tmpfilename,'trackdata','params','moviefile','bgmed','roidata','nflies','fly2roiid','didtrackwings','stage');
@@ -373,7 +399,7 @@ end
 trxfns = intersect({'x','y','a','b','theta','xwingl','ywingl','xwingr','ywingr','wing_anglel','wing_angler'},fieldnames(trackdata.trx));
 for roii = 1:nrois,
   
-  if roidata.nflies_per_roi(roii) < 2,
+  if isnan(roidata.nflies_per_roi(roii)) || roidata.nflies_per_roi(roii) < 2,
     continue;
   end
   
@@ -397,7 +423,7 @@ for roii = 1:nrois,
   [idsfit_curr,mudatafit_curr,sigmadatafit_curr,sigmamotionfit_curr,cost_curr,niters_curr] = ...
     AssignIdentities(x,y,iddata,'vel_dampen',params.err_dampen_pos,'appearanceweight',appearanceweight);
   assignids_nflips(roii) = nnz(idsfit_curr(1,1:end-1)~=idsfit_curr(1,2:end));
-  fprintf('Roi %d, flipped ids %d times\n',roii,assignids_nflips(roii));
+  fprintf(logfid,'Roi %d, flipped ids %d times\n',roii,assignids_nflips(roii));
   
   for i = 1:2,
     for j = 1:2,
@@ -443,7 +469,7 @@ for ii = 1:numel(idx),
       error('Unknown assignidsby value');
   end
   meanareacurr = nanmean(areacurr(:));
-  fprintf('%d: %f\n',i,meanareacurr);
+  fprintf(logfid,'%d: %f\n',i,meanareacurr);
   if meanareacurr <= area_thresh, 
     typeperroi{i} = params.typesmallval;
   else
@@ -482,7 +508,7 @@ save(tmpfilename,'trackdata','params','moviefile','bgmed','roidata','nflies','fl
 
 if ~dorestart || find(strcmp(stage,stages)) >= find(strcmp(restartstage,stages)),
 
-fprintf('Choosing orientations 2...\n');
+fprintf(logfid,'Choosing orientations 2...\n');
 isflip = false(nflies,nframes_track);
 
 for i = 1:nflies,
@@ -495,10 +521,10 @@ for i = 1:nflies,
   x = trackdata.trx(i).x;
   y = trackdata.trx(i).y;
   theta = trackdata.trx(i).theta;
-  fprintf('Re-choosing orientations for fly %d (nidflips = %d)\n',i,trackdata.assignids.nflips(roii));
+  fprintf(logfid,'Re-choosing orientations for fly %d (nidflips = %d)\n',i,trackdata.assignids.nflips(roii));
   trackdata.trx(i).theta = choose_orientations(x,y,theta,params.choose_orientations_velocity_angle_weight,params.choose_orientations_max_velocity_angle_weight);
   isflip(i,:) = round(abs(modrange(theta-trackdata.trx(i).theta,-pi,pi))/pi) > 0;
-  fprintf('N. orientation flips = %d\n',nnz(isflip(i,:)));
+  fprintf(logfid,'N. orientation flips = %d\n',nnz(isflip(i,:)));
   
 end
 
@@ -527,7 +553,7 @@ end
   
 if params.dotrackwings && ~isempty(roistrack),
   
-  fprintf('Tracking wings 2...\n');
+  fprintf(logfid,'Tracking wings 2...\n');
   
   [nr,nc,~] = size(readframe(1));
   isarena = false(nr,nc);
@@ -648,7 +674,7 @@ end
     
 %% clean up
 
-fprintf('Clean up...\n');
+fprintf(logfid,'Clean up...\n');
 
 if fid > 1,
   try

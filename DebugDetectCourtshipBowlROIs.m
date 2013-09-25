@@ -69,8 +69,8 @@ moviefile = fullfile(rootdatadir,experiment_name,'movie.ufmf');
 annfile = fullfile(rootdatadir,experiment_name,'movie.ufmf.ann');
 
 [readframe,nframes,fid,headerinfo] = get_readframe_fcn(moviefile);
-imheight = headerinfo.nr;
-imwidth = headerinfo.nc;
+im = readframe(1);
+[imheight,imwidth,~] = size(im);
 
 %% compute background model
 

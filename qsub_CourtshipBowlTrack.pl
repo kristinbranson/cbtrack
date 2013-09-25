@@ -11,9 +11,9 @@ if($nargs < 1){
     exit(1);
 }
 
-my $KEYWORD = "WING_GO";
+my $KEYWORD = "SCBT";
 
-my $ANALYSIS_PROTOCOL = "20130212_galit_rejection_wingclipped_20130207";
+my $ANALYSIS_PROTOCOL = "20130731_shelby";
 
 my $BASEDIR = "/groups/branson/bransonlab/projects/CourtshipBowls/CourtshipBowlAnalysis";
 

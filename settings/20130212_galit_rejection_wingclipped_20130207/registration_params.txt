@@ -1,1 +1,0 @@
-arena_diameter,30.3

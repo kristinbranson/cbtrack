@@ -1,4 +1,4 @@
-function nflies_per_roi = CountFliesPerROI(readframe,bgmed,nframes,roidata,roiparams,tracking_params)
+function nflies_per_roi = CountFliesPerROI(readframe,bgmed,nframes,roidata,rigbowl,roiparams,tracking_params)
 
 nrois = numel(roidata.centerx);
 
@@ -36,6 +36,14 @@ end
 % otherwise use 99th percentile
 nflies_per_roi = nan(1,nrois);
 for i = 1:nrois,
+  
+  if isfield(roiparams,'ignorebowls') && ...
+      isfield(roiparams.ignorebowls,rigbowl) && ...
+      ismember(i,roiparams.ignorebowls.(rigbowl)),
+    nflies_per_roi(i) = nan;
+    continue;
+  end
+  
   nccs = cellfun(@(x) nnz(x >= tracking_params.minccarea),areassample(i,:));
   mode_nccs = mode(nccs);
   if mode_nccs ~= 1,
