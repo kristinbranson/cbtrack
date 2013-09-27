@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<params>
+
+<dataloc>
+
+  <movie type="data_capture" filestr="movie.ufmf" essential="1"/>
+  <metadata type="data_capture" filestr="Metadata.xml" essential="1"/>
+  <ufmfdiagnostics type="data_capture" filestr="ufmf_diagnostics.txt" essential="0"/>
+  <ufmf_log type="data_capture" filestr="ufmf_log.txt" essential="0"/>
+  <quickstats type="data_capture" filestr="QuickStats.txt" essential="0"/>
+  <quickstatsimage type="data_capture" filestr="QuickStats.png" essential="0"/>
+  <temperature type="data_capture" filestr="temperature.txt" essential="0"/>
+  <fbdc_params type="data_capture" filestr="FlyBowlDataCaptureParams_*.txt" essential="0"/>
+  <fbdc_log type="data_capture" filestr="Log.txt" essential="0"/>
+  <success type="data_capture" filestr="SUCCESS" essential="0"/>
+  <aborted type="data_capture" filestr="ABORTED" essential="-1"/>
+
+  <automaticchecksincomingresults type="auto_checks_incoming" filestr="automatic_checks_incoming_results.txt" essential="0"/>
+  <automaticchecks_incoming_log type="auto_checks_incoming" filestr="log_fba.txt" essential="0"/>
+  
+  <bgmat type="detect_rois" filestr="bgdata.mat" essential="1"/>
+  <bgimage type="detect_rois" filestr="bg.png" essential="0"/>
+  <roidatamat type="detect_rois" filestr="roidata.mat" essential="1"/>
+  <roiimage type="detect_rois" filestr="rois.png" essential="0"/>
+  <roi_log type="detect_rois" filestr="log_fba.txt" essential="0"/>
+
+  <trx type="track" filestr="registered_trx.mat" essential="1"/>
+  <trackingdatamat type="track" filestr="trackingdata.mat" essential="0"/>
+  <track_log type="track" filestr="log_fba.txt" essential="0"/>
+
+  <perframedir type="compute_perframe_features" filestr="perframe" essential="1"/>
+  <perframefeature_log type="compute_perframe_features" filestr="log_fba.txt" essential="0"/>
+  <perframefeaturedatamat type="compute_perframe_features" filestr="pffdata.mat"/>
+  
+  <resultsavi type="results_movie" filestr="tracking_results_movie" essential="1" searchstr="tracking_results_movie*.avi"/>
+  <resultsmoviedatamat type="results_movie" filestr="trackingresultsmoviedata.mat" essential="0"/> 
+  <resultsmovie_log type="results_movie" filestr="log_fba.txt" essential="0"/>
+
+  <automaticcheckscompleteresults type="auto_checks_complete" filestr="automatic_checks_complete_results.txt" essential="0"/>
+  <automaticchecks_complete_log type="auto_checks_complete" filestr="log_fba.txt" essential="0"/>
+
+</dataloc>
+
+<auto_checks_incoming 
+   min_seconds_fliesloaded="0"
+   max_seconds_fliesloaded="inf"
+   max_seconds_shiftflytemp="inf"
+   min_ufmf_nframes="5000"
+   max_tempdiff="inf"
+   max_temp="inf"
+   required_metadata_fields="flag_aborted,flag_redo,seconds_fliesloaded,screen_type,screen_reason">
+ </auto_checks_incoming>
+
+<detect_rois
+   cannythresh=".03,.06"
+   cannysigma="3"
+   maxdcenter="10"
+   maxdradius="10"
+   nbinscenter="21"
+   nbinsradius="21"
+   meanroiradius="121.4683"
+   nframessample="100"
+   roidiameter_mm="30.3"
+   baserotateby="180">
+
+  <roimus 
+     x="262.597500,514.706500,766.678500,133.752600,385.124700,638.326000,889.582900,255.634500,507.622200,760.027600"
+     y="253.369100,256.846900,261.012800,507.641600,508.239800,511.270200,514.707900,758.952000,762.874600,766.526200"
+     />
+  <roirows
+     top="1,2,3"
+     middle="4,5,6,7"
+     bottom="8,9,10"
+     />
+  
+  <baserotatebyperrigbowl
+     rig1bowlA="180"
+     rig1bowlB="180"
+     rig1bowlC="180"
+     rig1bowlD="180"
+     rig2bowlA="180"
+     rig2bowlB="180"
+     rig2bowlC="180"
+     rig2bowlD="180"/>
+
+  <ignorebowls
+     rig1bowlA="7"
+     rig1bowlB="4"
+     rig1bowlC="4"
+     rig1bowlD="7"
+     rig2bowlA="7"
+     rig2bowlB="4"
+     rig2bowlC="4"
+     rig2bowlD="7"/>
+
+  
+</detect_rois>
+
+<track
+   firstframetrack="1"
+   lastframetrack="inf"
+   dotrackwings="1"
+   usemediandt="1"
+   bg_nframes="100"
+   bg_lastframe="5000"
+   bgmode="LIGHTBKGD"
+   bgthresh="110"
+   bgthresh_low="90"
+   minccarea="20"
+   gmmem_nrestarts_firstframe="10"
+   gmmem_precision=".01"
+   gmmem_maxiters="100"
+   gmmem_min_obsprior=".2"
+   err_dampen_priors=".1"
+   err_dampen_pos=".1"
+   err_dampen_theta=".8"
+   err_weightpos="1"
+   err_weighttheta="1"
+   err_weightarea="1"
+   choose_orientations_velocity_angle_weight=".03"
+   choose_orientations_max_velocity_angle_weight=".18"
+   assignidsby="size"
+   typefield="sex"
+   typesmallval="M"
+   typebigval="F"
+/>
+
+<wingtrack
+   mindwing_high="50"
+   mindwing_low="30"
+   mindbody="100"
+   radius_dilate_body="1"
+   radius_open_wing="1"
+   min_wingcc_area="3"
+   max_wingcc_dist="2.356194490192345"
+   max_wingpx_angle="2.356194490192345"
+   max_wing_angle_otherside="0.174532925199433"
+   min_nonzero_wing_angle="0.174532925199433"
+   wing_min_peak_dist_bins="3"
+   wing_min_peak_threshold_frac="0"
+   nbins_dthetawing="50"
+   wing_peak_min_frac_factor="2"
+   wing_frac_filter=".25,.5,.25"
+   wing_fit_method="peaks"
+   wing_min_prior=".25"
+   min_single_wing_area="10"
+   wing_radius_quadfit_bins="1"
+/>
+
+<compute_perframe_features
+   fov="3.141592653589793"
+   thetafil="0.0625,0.2500,0.3750,0.2500,0.0625"
+   nbodylengths_near="2.5"
+   max_dnose2ell_anglerange="127"
+   areasmooth_maxfreq=".005"
+   areasmooth_filterorder="1"
+   areasmooth_outlierprctile=".1"
+   areasmooth_maxerrx="0.279077"
+   perframefns="absangle2wall,absdangle2wall,absdtheta,absdv_cor,abssmoothdtheta,anglesub,area,areasmooth,arena_angle,arena_r,closestfly_anglesub,closestfly_center,closestfly_ell2nose,closestfly_nose2ell,corfrac_maj,dangle2wall,danglesub,dcenter,ddcenter,ddell2nose,ddist2wall,ddnose2ell,dell2nose,dist2wall,dnose2ell,dtheta,du_cor,du_ctr,dv_cor,dv_ctr,flipdv_cor,phi,phisideways,velmag,velmag_ctr,yaw,magveldiff_nose2ell,magveldiff_anglesub,veltoward_nose2ell,veltoward_anglesub,absthetadiff_nose2ell,absthetadiff_anglesub,absphidiff_nose2ell,absphidiff_anglesub,absyaw,absanglefrom1to2_nose2ell,absanglefrom1to2_anglesub,x,y,theta,a,b,timestamps,x_mm,y_mm,a_mm,b_mm,theta_mm,dt,sex,da,db,darea,ecc,decc,dphi,du_tail,dv_tail,velmag_nose,velmag_tail,nflies_close,angleonclosestfly,accmag,closestfly_nose2tail,dnose2tail,closestfly_nose2ell_angle_min30to30,closestfly_nose2ell_angle_min20to20,closestfly_nose2ell_angle_30tomin30,dnose2ell_angle_min30to30,dnose2ell_angle_min20to20,dnose2ell_angle_30tomin30"/>
+
+<results_movie
+   fps="30"
+   nzoomr="6"
+   nzoomc="3"
+   boxradius="20"
+   taillength="25"
+   firstframes="0,.5,-1"
+   middleframes="-1,.5,-1"
+   endframes="-1,-1,1"
+   nframes="500,500,500"
+   figpos="1,1,1536,1024"
+   tempdatadir="/groups/branson/bransonlab/projects/CourtshipBowls/TempData_CourtshipBowlMakeResultsMovie"
+/>
+
+<auto_checks_complete
+   min_nrois="1"
+   min_nrois_2flies="0"
+   max_nrois_2flies="inf"
+   min_nrois_1fly="0"
+   max_nrois_1fly="inf"
+   max_nrois_moreflies="inf"
+   min_nrois_0flies="0"
+   max_nrois_0flies="inf"
+   />
+   
+
+</params>
