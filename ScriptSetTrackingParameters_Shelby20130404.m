@@ -39,7 +39,7 @@ roiparams.roimus = [roiparams.roimus.x(:),roiparams.roimus.y(:)];
 
 %% loop over experiments
 
-for expi = 2:numel(expdirs),
+for expi = 1:numel(expdirs),
   
   expdir = expdirs{expi};
   [~,experiment_name] = fileparts(expdir);

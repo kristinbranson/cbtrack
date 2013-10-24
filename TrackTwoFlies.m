@@ -1,6 +1,6 @@
 function trackdata = TrackTwoFlies(moviefile,bgmed,roidata,params,varargin)
 
-version = '0.1.1';
+version = '0.1.2';
 timestamp = datestr(now,TimestampFormat);
 trackdata = struct;
 trackdata.tracktwoflies_version = version;
@@ -92,6 +92,9 @@ for t = startframe:min(params.lastframetrack,nframes),
   
   % read in frame
   im = readframe(t);
+  if size(im,3) > 1,
+    im = rgb2gray(im);
+  end
   
   % subtract off background
   switch params.bgmode,
@@ -215,9 +218,15 @@ for i = 1:nrois,
     trackdata.trx(j).off = 1-params.firstframetrack;
     trackdata.trx(j).roi = i;
     trackdata.trx(j).arena = struct;
-    trackdata.trx(j).arena.arena_radius_mm = roidata.radii(i);
-    trackdata.trx(i).arena.arena_center_mm_x = roidata.centerx(i);
-    trackdata.trx(i).arena.arena_center_mm_y = roidata.centery(i);
+    if isfield(roidata,'radii'),
+      trackdata.trx(j).arena.arena_radius_mm = roidata.radii(i);
+    end
+    if isfield(roidata,'centerx'),
+      trackdata.trx(i).arena.arena_center_mm_x = roidata.centerx(i);
+    end
+    if isfield(roidata,'centery'),
+      trackdata.trx(i).arena.arena_center_mm_y = roidata.centery(i);
+    end
     %trackdata.trx(j).roipts = rois{i};
     %trackdata.trx(j).roibb = roibbs(i,:);
     trackdata.trx(j).moviefile = moviefile;
