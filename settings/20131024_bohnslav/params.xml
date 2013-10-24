@@ -173,7 +173,7 @@
    firstframes="0,.5,-1"
    middleframes="-1,.5,-1"
    endframes="-1,-1,1"
-   nframes="50,50,50"
+   nframes="200,200,200"
    figpos="1,1,652,378"
    tempdatadir="/groups/branson/bransonlab/projects/CourtshipBowls/TempData_CourtshipBowlMakeResultsMovie"
 />
